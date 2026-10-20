@@ -18,17 +18,6 @@ Mã nguồn sơ đồ: [`use-case/so-do-use-case.puml`](use-case/so-do-use-case.
 | Quản trị viên | Chính | Kế thừa toàn bộ quyền Nhân viên + quản trị nội dung, hệ thống (role `admin`) |
 | Cổng thanh toán | Phụ | Hệ thống ngoài xử lý thanh toán online, gọi lại webhook có chữ ký |
 
-### Những điểm đã sửa so với bản vẽ trước
-
-| # | Sai sót | Vì sao sai (đối chiếu code) | Đã sửa |
-|---|---|---|---|
-| 1 | Mũi tên **tổng quát hóa** (tam giác rỗng) nối từ Quản trị viên tới use case "Gợi ý mô tả bằng AI" | Tổng quát hóa chỉ dùng giữa **tác nhân – tác nhân** (hoặc use case – use case). Ý đúng là *Quản trị viên kế thừa Nhân viên* (`require_admin_role` chỉ chặn staff, admin dùng được mọi chức năng của staff) | Quản trị viên ▷ Nhân viên |
-| 2 | Du khách **không có đường nối** tới "Nhập mã truy cập" | Khách trả tiền mặt tại quầy nhận mã 6 ký tự rồi tự nhập vào app (`POST /access/token`) — đây là thao tác trực tiếp của du khách | Thêm Du khách — Nhập mã truy cập |
-| 3 | "Thanh toán online" `<<extend>>` "Mua vé" | Trong app, mua vé **luôn** đi qua thanh toán online (`POST /access/online` → cổng thanh toán); mua tiền mặt là chức năng của Nhân viên. Bước luôn xảy ra phải là `<<include>>` | Đổi tên "Mua vé online", `<<include>>` "Thanh toán online"; thêm tác nhân phụ **Cổng thanh toán** |
-| 4 | "Đăng xuất" `<<include>>` "Đăng nhập" | Đăng xuất không thực hiện lại việc đăng nhập; đăng nhập là thao tác Nhân viên tự làm | Bỏ include; thêm Nhân viên — Đăng nhập |
-| 5 | Thiếu chức năng nhân viên có trong code | Trang *Mã truy cập* có "Lịch sử phiên truy cập" mà staff xem được (`GET /admin/access-sessions`) | Thêm "Tra cứu mã truy cập" |
-
-> Ghi chú: các chức năng quản trị `<<include>>` "Đăng nhập" và các chức năng du khách `<<include>>` "Nhập mã truy cập" được giữ theo quy ước của nhóm: đây là **bước bắt buộc** (API trả 401 nếu thiếu token).
 
 ### Danh sách use case
 
