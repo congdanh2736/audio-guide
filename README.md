@@ -93,7 +93,7 @@ Thấy dòng `Đã kết nối MongoDB` là thành công. Nếu MongoDB chưa ch
 
 Lần đầu chạy, hệ thống tự tạo 16 ngôn ngữ, tài khoản admin và **dữ liệu mẫu** (6 điểm tham quan, 2 lộ trình, 6 bài viết cho chatbot) — **chỉ một lần**, các lần sau dữ liệu được giữ nguyên.
 
-### Thông tin chi tiết từng điểm (giống Google Maps)
+### Thông tin chi tiết từng điểm (tương tụ với Google Maps)
 
 Mỗi điểm tham quan có: **giờ mở cửa theo từng ngày** (nhiều khung/ngày, vd nghỉ trưa), trạng thái **Đang mở cửa / Sắp đóng cửa / Đã đóng cửa**, vé vào cửa, thời gian tham quan gợi ý, tiện ích & quy định, lưu ý (tự dịch 16 ngôn ngữ), biểu đồ **khung giờ đông khách**, nút **Chỉ đường**. Admin nhập ở form sửa điểm tham quan.
 
@@ -102,7 +102,7 @@ Mỗi điểm tham quan có: **giờ mở cửa theo từng ngày** (nhiều khu
 
 > Mẹo: Không ở chùa? Trong app tick ô **Giả lập GPS** rồi bấm lên bản đồ để **giả lập vị trí GPS** — đi vào vòng tròn của một điểm, sau ~3 giây app tự mở và phát thuyết minh.
 
-### Bật chatbot AI tạo sinh (khuyên dùng)
+### Bật chatbot AI tạo sinh
 
 1. Vào https://aistudio.google.com/apikey → đăng nhập Google → **Create API key** (miễn phí).
 2. Dán vào file `.env`: `LLM_API_KEY=<key vừa tạo>` (không dấu nháy) rồi khởi động lại server.
