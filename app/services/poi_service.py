@@ -89,7 +89,14 @@ class PoiService:
 
     async def delete(self, poi_id: str) -> None:
         await self.get(poi_id)
-        # Xóa dây chuyền: bản dịch + gỡ POI khỏi các tour
-        await self.localization_repo.delete_for_poi(poi_id)
+        # Ràng buộc RESTRICT: còn bản dịch (poi_localizations) trỏ tới POI thì không cho xóa.
+        # MongoDB không có khóa ngoại nên quy tắc này được đảm bảo ở lớp Service.
+        remaining = await self.localization_repo.count({"poi_id": poi_id})
+        if remaining:
+            raise ConflictError(
+                f"Không thể xóa POI vì còn {remaining} bản dịch tham chiếu tới. Hãy xóa các bản dịch trước.",
+                code="POI_HAS_LOCALIZATIONS",
+                details={"localizations": remaining},
+            )
         await self.tour_repo.remove_poi_everywhere(poi_id)
         await self.poi_repo.delete(poi_id)

@@ -35,12 +35,21 @@ class TestPoiService:
         with pytest.raises(ConflictError):
             await services["poi"].update(b.id, {"code": "A"})
 
-    async def test_delete_cascades(self, services, repos):
+    async def test_delete_restricted_when_localizations_exist(self, services, repos):
+        poi = await services["poi"].create(poi_data("A"), auto_localize=False)
+        await services["localization"].localize_poi(poi.id, ["en"])
+        with pytest.raises(ConflictError) as exc:
+            await services["poi"].delete(poi.id)
+        assert exc.value.code == "POI_HAS_LOCALIZATIONS"
+        assert await services["poi"].get(poi.id)  # POI vẫn còn
+        assert await repos["localization"].list_for_poi(poi.id) != []
+
+    async def test_delete_after_removing_localizations(self, services, repos):
         poi = await services["poi"].create(poi_data("A"), auto_localize=False)
         await services["localization"].localize_poi(poi.id, ["en"])
         tour = await services["tour"].create({"code": "T", "name": "Tour", "poi_ids": [poi.id]})
+        assert await services["localization"].delete_for_poi(poi.id) > 0
         await services["poi"].delete(poi.id)
-        assert await repos["localization"].list_for_poi(poi.id) == []
         assert (await repos["tour"].get_by_id(tour.id)).poi_ids == []
         with pytest.raises(NotFoundError):
             await services["poi"].get(poi.id)

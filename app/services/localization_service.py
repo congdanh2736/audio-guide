@@ -259,6 +259,13 @@ class LocalizationService:
             },
         )
 
+    async def delete_for_poi(self, poi_id: str) -> int:
+        """Xóa mọi bản dịch của 1 POI (bước bắt buộc trước khi xóa POI).
+
+        Không kiểm tra POI còn tồn tại, để dọn được cả bản dịch mồ côi của POI đã bị xóa.
+        """
+        return await self.localization_repo.delete_for_poi(poi_id)
+
     async def overview(self, poi_id: str) -> list[LocalizationOverview]:
         """Bảng trạng thái dịch của 1 POI cho mọi ngôn ngữ đang bật (cho admin)."""
         poi = await self._get_poi(poi_id)

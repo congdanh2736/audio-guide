@@ -169,7 +169,7 @@ async def update_poi(poi_id: str, body: PoiUpdate, service=Depends(get_poi_servi
     "/pois/{poi_id}",
     response_model=ApiResponse[None],
     tags=["Admin - POI"],
-    summary="Xóa POI (xóa kèm bản dịch, gỡ khỏi tour)",
+    summary="Xóa POI (bị chặn nếu còn bản dịch; gỡ POI khỏi tour)",
     dependencies=[Depends(require_admin_role)],
 )
 async def delete_poi(poi_id: str, service=Depends(get_poi_service)):
@@ -186,6 +186,18 @@ async def delete_poi(poi_id: str, service=Depends(get_poi_service)):
 )
 async def localization_overview(poi_id: str, service=Depends(get_localization_service)):
     return ok([row.model_dump() for row in await service.overview(poi_id)])
+
+
+@router.delete(
+    "/pois/{poi_id}/localizations",
+    response_model=ApiResponse[dict],
+    tags=["Admin - Localization"],
+    summary="Xóa toàn bộ bản dịch của POI (phải làm trước khi xóa POI)",
+    dependencies=[Depends(require_admin_role)],
+)
+async def delete_localizations(poi_id: str, service=Depends(get_localization_service)):
+    deleted = await service.delete_for_poi(poi_id)
+    return ok({"deleted": deleted}, f"Đã xóa {deleted} bản dịch")
 
 
 @router.post(

@@ -170,7 +170,7 @@
     $$("[data-loc]").forEach((b) => (b.onclick = () => localizationModal(state.pois.find((p) => p.id === b.dataset.loc))));
     $$("[data-del]").forEach((b) => (b.onclick = async () => {
       const poi = state.pois.find((p) => p.id === b.dataset.del);
-      if (!confirm(`Xóa "${poi.name}"? Mọi bản dịch và audio sẽ bị xóa theo.`)) return;
+      if (!confirm(`Xóa "${poi.name}"? (Chỉ xóa được khi POI không còn bản dịch nào)`)) return;
       await api(`/pois/${poi.id}`, { method: "DELETE" });
       toast("Đã xóa");
       renderPois(q);
