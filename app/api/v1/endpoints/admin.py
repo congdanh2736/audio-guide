@@ -200,6 +200,18 @@ async def delete_localizations(poi_id: str, service=Depends(get_localization_ser
     return ok({"deleted": deleted}, f"Đã xóa {deleted} bản dịch")
 
 
+@router.delete(
+    "/pois/{poi_id}/localizations/{lang}",
+    response_model=ApiResponse[None],
+    tags=["Admin - Localization"],
+    summary="Xóa bản dịch của POI ở 1 ngôn ngữ",
+    dependencies=[Depends(require_admin_role)],
+)
+async def delete_localization(poi_id: str, lang: str, service=Depends(get_localization_service)):
+    await service.delete_one(poi_id, lang)
+    return ok(None, f"Đã xóa bản dịch '{lang}'")
+
+
 @router.post(
     "/pois/{poi_id}/localize",
     response_model=ApiResponse[LocalizeQueuedOut],

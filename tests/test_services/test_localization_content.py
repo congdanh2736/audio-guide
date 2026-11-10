@@ -2,7 +2,7 @@
 
 import pytest
 
-from app.core.exceptions import BusinessRuleError, NotFoundError
+from app.core.exceptions import BusinessRuleError, ConflictError, NotFoundError
 from tests.conftest import poi_data
 
 
@@ -56,6 +56,21 @@ class TestLocalizationPipeline:
     async def test_cannot_manually_edit_source_language(self, services, poi):
         with pytest.raises(BusinessRuleError):
             await services["localization"].update_manual(poi.id, "vi", name="x", description="y")
+
+    async def test_delete_one_language(self, services, repos, poi):
+        await services["localization"].localize_poi(poi.id, ["en", "ja"])
+        await services["localization"].delete_one(poi.id, "en")
+        assert await repos["localization"].get(poi.id, "en") is None
+        assert await repos["localization"].get(poi.id, "ja") is not None  # ngôn ngữ khác không bị ảnh hưởng
+
+    async def test_delete_missing_language_not_found(self, services, poi):
+        with pytest.raises(NotFoundError):
+            await services["localization"].delete_one(poi.id, "en")
+
+    async def test_cannot_delete_while_processing(self, services, repos, poi):
+        await repos["localization"].upsert(poi.id, "en", {"status": "processing"})
+        with pytest.raises(ConflictError):
+            await services["localization"].delete_one(poi.id, "en")
 
     async def test_schedule_marks_pending_then_runs(self, services, poi, task_runner):
         queued = await services["localization"].schedule_poi(poi.id, ["en", "ja"])

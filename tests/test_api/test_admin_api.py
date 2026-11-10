@@ -106,6 +106,16 @@ class TestAdminOther:
         assert response.status_code == 202 and response.json()["data"]["queued"] == 16
         service.schedule_poi.assert_awaited_once_with("p1", None, force=True)
 
+    def test_delete_localization(self, app, client, as_admin):
+        service = override(app, deps.get_localization_service, async_mock_service("delete_one"))
+        response = client.delete("/api/v1/admin/pois/p1/localizations/en")
+        assert response.status_code == 200
+        service.delete_one.assert_awaited_once_with("p1", "en")
+
+    def test_staff_cannot_delete_localization(self, app, client, as_staff):
+        override(app, deps.get_localization_service, async_mock_service("delete_one"))
+        assert client.delete("/api/v1/admin/pois/p1/localizations/en").status_code == 403
+
     def test_staff_creates_cash_codes(self, app, client, as_staff):
         service = override(app, deps.get_access_service, async_mock_service("create_cash_codes"))
         service.create_cash_codes.return_value = []

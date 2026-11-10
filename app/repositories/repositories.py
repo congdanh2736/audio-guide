@@ -92,6 +92,10 @@ class PoiLocalizationRepository(BaseRepository[PoiLocalization]):
     async def get(self, poi_id: str, lang: str) -> PoiLocalization | None:
         return await self.find_one({"poi_id": poi_id, "lang": lang})
 
+    async def delete_one(self, poi_id: str, lang: str) -> bool:
+        result = await self.collection.delete_one({"poi_id": poi_id, "lang": lang})
+        return result.deleted_count == 1
+
     async def list_for_poi(self, poi_id: str) -> list[PoiLocalization]:
         return await self.list({"poi_id": poi_id})
 

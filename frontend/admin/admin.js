@@ -135,7 +135,7 @@
         <button id="btn-refresh" class="btn">Tải lại</button></div>
       <div class="grid-2">
         <div class="box"><h3>Trạng thái bản dịch</h3>${Object.entries(s.localization_status).map(([k, v]) => `${tag(k)} ${v}`).join(" &nbsp; ") || '<span class="muted">Chưa có</span>'}
-          <h3>Phiên truy cập</h3>${Object.entries(s.access_sessions).map(([k, v]) => `${tag(k)} ${v}`).join(" &nbsp; ") || '<span class="muted">Chưa có</span>'}</div>
+          <h3>Phiên truy cập</h3>${Object.entries(s.access_sessions).map(([k, v]) => `${tag(k)} ${v * 2}`).join(" &nbsp; ") || '<span class="muted">Chưa có</span>'}</div>
         <div class="box"><h3>POI được quan tâm nhất</h3><table><tr><th>POI</th><th>Lượt</th></tr>
           ${s.top_pois.map((p) => `<tr><td>${esc(p.name)}</td><td>${p.count}</td></tr>`).join("") || '<tr><td colspan="2" class="muted">Chưa có dữ liệu</td></tr>'}</table>
           <h3>Ngôn ngữ du khách dùng</h3>${Object.entries(s.events_by_lang).map(([k, v]) => `<b>${esc(k)}</b>: ${v}`).join(" · ") || '<span class="muted">Chưa có</span>'}</div>
@@ -297,7 +297,8 @@
       const busy = rows.some((r) => ["pending", "processing"].includes(r.status));
       $("#modal-body").innerHTML = `
         <div class="toolbar">${isAdmin() ? `<button id="btn-loc-all" class="btn primary small-btn">Dịch các ngôn ngữ còn thiếu</button>
-          <button id="btn-loc-force" class="btn small-btn">Dịch lại toàn bộ (ghi đè)</button>` : ""}
+          <button id="btn-loc-force" class="btn small-btn">Dịch lại toàn bộ (ghi đè)</button>
+          <button id="btn-loc-del-all" class="btn small-btn danger">Xóa toàn bộ bản dịch</button>` : ""}
           <span class="spacer"></span><span class="muted small">${busy ? "Đang xử lý, trang tự cập nhật..." : ""}</span></div>
         <table><tr><th>Ngôn ngữ</th><th>Trạng thái</th><th>Nguồn</th><th>Tên</th><th>Audio</th><th></th></tr>
         ${rows.map((r) => `<tr><td><b>${esc(r.lang)}</b> <span class="small muted">${esc(r.language_name)}</span></td>
@@ -305,11 +306,26 @@
           <td class="small">${esc(r.translated_by || "—")}</td><td class="small">${esc(r.name || "—")}</td>
           <td>${r.audio_url ? `<audio controls preload="none" src="${esc(r.audio_url)}"></audio>` : '<span class="muted small">—</span>'}</td>
           <td class="actions">${isAdmin() && r.lang !== "vi" ? `<button class="btn small-btn" data-manual="${r.lang}">Sửa tay</button>` : ""}
-            ${isAdmin() ? `<button class="btn small-btn" data-redo="${r.lang}">Dịch lại</button>` : ""}</td></tr>`).join("")}</table>`;
+            ${isAdmin() ? `<button class="btn small-btn" data-redo="${r.lang}">Dịch lại</button>` : ""}
+            ${isAdmin() && r.status !== "missing" ? `<button class="btn small-btn danger" data-del-loc="${r.lang}">Xóa</button>` : ""}</td></tr>`).join("")}</table>`;
       if ($("#btn-loc-all")) {
         $("#btn-loc-all").onclick = () => queue(null, false);
         $("#btn-loc-force").onclick = () => confirm("Ghi đè cả bản sửa tay?") && queue(null, true);
+        $("#btn-loc-del-all").onclick = async () => {
+          if (!confirm(`Xóa TOÀN BỘ bản dịch của "${poi.name}"? (cần làm trước khi xóa POI)`)) return;
+          const r = await api(`/pois/${poi.id}/localizations`, { method: "DELETE" });
+          toast(`Đã xóa ${r.deleted} bản dịch`);
+          load();
+        };
       }
+      $$("[data-del-loc]").forEach((b) => (b.onclick = async () => {
+        const lang = b.dataset.delLoc;
+        const note = lang === "vi" ? "\nĐây là bản gốc tiếng Việt: du khách chọn tiếng Việt sẽ không có audio cho tới khi dịch lại." : "";
+        if (!confirm(`Xóa bản dịch "${lang}" của "${poi.name}"?${note}`)) return;
+        await api(`/pois/${poi.id}/localizations/${lang}`, { method: "DELETE" });
+        toast(`Đã xóa bản dịch ${lang}`);
+        load();
+      }));
       $$("[data-redo]").forEach((b) => (b.onclick = () => queue([b.dataset.redo], true)));
       $$("[data-manual]").forEach((b) => (b.onclick = () => manualEdit(rows.find((r) => r.lang === b.dataset.manual))));
       clearInterval(state.timer);

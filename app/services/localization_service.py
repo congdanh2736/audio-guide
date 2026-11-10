@@ -16,7 +16,7 @@ import logging
 from collections import defaultdict
 from datetime import timedelta
 
-from app.core.exceptions import BusinessRuleError, ExternalServiceError, NotFoundError
+from app.core.exceptions import BusinessRuleError, ConflictError, ExternalServiceError, NotFoundError
 from app.core.security import utcnow
 from app.models.domain import Language, LocalizationStatus, Poi, PoiLocalization, Tour, TranslatedBy
 from app.models.views import LocalizationOverview
@@ -265,6 +265,21 @@ class LocalizationService:
         Không kiểm tra POI còn tồn tại, để dọn được cả bản dịch mồ côi của POI đã bị xóa.
         """
         return await self.localization_repo.delete_for_poi(poi_id)
+
+    async def delete_one(self, poi_id: str, lang: str) -> None:
+        """Xóa bản dịch của 1 POI ở 1 ngôn ngữ.
+
+        Không cho xóa khi bản dịch đang chờ/đang xử lý: tác vụ nền chạy xong sẽ ghi lại
+        (upsert) và bản dịch vừa xóa sẽ xuất hiện trở lại.
+        """
+        loc = await self.localization_repo.get(poi_id, lang)
+        if loc is None:
+            raise NotFoundError(f"POI không có bản dịch '{lang}'", code="LOCALIZATION_NOT_FOUND")
+        if loc.status in (LocalizationStatus.PENDING, LocalizationStatus.PROCESSING):
+            raise ConflictError(
+                f"Bản dịch '{lang}' đang được xử lý, hãy đợi xong rồi xóa", code="LOCALIZATION_BUSY"
+            )
+        await self.localization_repo.delete_one(poi_id, lang)
 
     async def overview(self, poi_id: str) -> list[LocalizationOverview]:
         """Bảng trạng thái dịch của 1 POI cho mọi ngôn ngữ đang bật (cho admin)."""
